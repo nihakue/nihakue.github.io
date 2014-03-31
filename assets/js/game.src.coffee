@@ -18,7 +18,7 @@ class PlayerSprite extends Phaser.Sprite
       y: 0.5
 
     @speed = 300
-    @jumpStrength = 800
+    @jumpStrength = 700
 
     @animations.add('jump',
       Phaser.Animation.generateFrameNames('jump', 0, 7, '', 2)
