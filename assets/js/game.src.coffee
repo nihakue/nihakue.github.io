@@ -17,8 +17,8 @@ class PlayerSprite extends Phaser.Sprite
       x: 0.5
       y: 0.5
 
-    @speed = 150
-    @jumpStrength = 500
+    @speed = 300
+    @jumpStrength = 800
 
     @animations.add('jump',
       Phaser.Animation.generateFrameNames('jump', 0, 7, '', 2)
@@ -30,11 +30,11 @@ class PlayerSprite extends Phaser.Sprite
 
     @animations.add('walk',
       Phaser.Animation.generateFrameNames('run', 0, 5, '', 2),
-      10, true)
+      12, true)
 
   initPhysics: ->
     @body.bounce.y = 0.2
-    @body.gravity.y = 700
+    @body.gravity.y = 1500
     @body.collideWorldBounds = true
 
   handleControl: (cursors) ->
