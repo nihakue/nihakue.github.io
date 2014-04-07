@@ -29,8 +29,8 @@ class PlayerSprite extends Phaser.Sprite
       5, true)
 
     @animations.add('walk',
-      Phaser.Animation.generateFrameNames('run', 0, 5, '', 2),
-      12, true)
+      Phaser.Animation.generateFrameNames('run', 0, 12, '', 2),
+      15, true)
 
   initPhysics: ->
     @body.bounce.y = 0.2
