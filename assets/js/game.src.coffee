@@ -123,6 +123,10 @@ class Player
     @cursors = null
     @speed = 300
     @jumpStrength = 700
+    @hp = 1
+
+    @loopcount = 0
+    @isIdle = true
 
   preload: ->
     @game.load.atlasJSONHash(
@@ -133,6 +137,8 @@ class Player
 
   create: ->
     @sprite = @game.add.sprite(32, game.world.height - 150, 'serge')
+
+    # Load all animations
     @sprite.animations.add('jump',
       Phaser.Animation.generateFrameNames('jump', 0, 7, '', 2)
       5, false)
@@ -144,12 +150,27 @@ class Player
     @sprite.animations.add('walk',
       Phaser.Animation.generateFrameNames('run', 0, 12, '', 2),
       15, true)
+
+    @into_exhausted = @sprite.animations.add('into_exhausted',
+      Phaser.Animation.generateFrameNames('into_exhausted', 0, 3, '', 2),
+      5, false)
+
+    @into_exhausted.onComplete.add(@exhaust, this)
+
+    @exhausted = @sprite.animations.add('exhausted',
+    Phaser.Animation.generateFrameNames('exhausted', 0, 7, '', 2),
+    5, true)
+
+
     @sprite.anchor =
       x: 0.5
       y: 0.5
 
     @initPhysics()
     @cursors = @game.input.keyboard.createCursorKeys()
+    @hurtKey = @game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
+    @hurtKey.onDown.add(@hurt, this)
+    @game.input.keyboard.addKeyCapture(Phaser.Keyboard.SPACEBAR)
 
   update: ->
     @handleControl()
@@ -183,11 +204,22 @@ class Player
     @sprite.animations.play('walk') if @sprite.body.touching.down
 
   idle: ->
-    @sprite.animations.play('idle') if @sprite.body.touching.down
+    if @sprite.body.touching.down
+      if @hp > .5
+        @sprite.animations.play('idle')
+      else 
+        @sprite.animations.play('exhausted')
+
+  exhaust: (sprite, animation) ->
+    @loopcount += 1
+    @sprite.animations.play('exhausted')
 
   jump: ->
     @sprite.body.velocity.y = -@jumpStrength
     @sprite.animations.play('jump')
+
+  hurt: ->
+    @hp -= .6
 class MainState extends Phaser.State
   constructor: -> super
 
@@ -198,7 +230,7 @@ class MainState extends Phaser.State
     @player = new Player(@game)
     @player.preload()
 
-    @hud = new Hud(@game)
+    @hud = new Hud(@game, @player)
 
   create: ->
     @game.physics.startSystem(Phaser.Physics.ARCADE)
@@ -222,6 +254,7 @@ class MainState extends Phaser.State
 
     @snell.update()
     @player.update()
+    @hud.update()
     # @debugText.text = @player.body.deltaY()
 
   collectStar: (player, star) ->
@@ -230,14 +263,18 @@ class MainState extends Phaser.State
     @hud.scoreText.text = 'Score: ' + @hud.score;
 
 class Hud
-  constructor: (@game) ->
+  constructor: (@game, @player) ->
     @score = 0
     @scoreText = null
 
   create: ->
+    scoreStyle =
+      font: "12px Arial"
+      fill: "#000"
+
     @scoreText = @game.add.text(
       16, 16, 'Score: 0'
-      fontSize:
-        '32px'
-      fill:
-        '#000')
+      scoreStyle)
+
+  update: ->
+    @scoreText.text = "lc: #{@player.loopcount} HP: #{@player.hp}\nScore:  #{@score}";
