@@ -1,0 +1,44 @@
+{"frames": {
+
+"walk00":
+{
+	"frame": {"x":24,"y":0,"w":24,"h":18},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":3,"y":12,"w":24,"h":18},
+	"sourceSize": {"w":30,"h":30}
+},
+"walk01":
+{
+	"frame": {"x":24,"y":18,"w":24,"h":18},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":3,"y":12,"w":24,"h":18},
+	"sourceSize": {"w":30,"h":30}
+},
+"walk02":
+{
+	"frame": {"x":0,"y":20,"w":24,"h":18},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":3,"y":12,"w":24,"h":18},
+	"sourceSize": {"w":30,"h":30}
+},
+"walk03":
+{
+	"frame": {"x":0,"y":0,"w":24,"h":20},
+	"rotated": false,
+	"trimmed": true,
+	"spriteSourceSize": {"x":3,"y":10,"w":24,"h":20},
+	"sourceSize": {"w":30,"h":30}
+}},
+"meta": {
+	"app": "http://www.codeandweb.com/texturepacker ",
+	"version": "1.0",
+	"image": "sqot.png",
+	"format": "RGBA8888",
+	"size": {"w":64,"h":64},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:7f25594f8a74a735662d4c0fb1f55991:2cd0a7cf629eb962d4042585843a3c1b:9355e8904c6a2379b8d27ba5d42ecff2$"
+}
+}

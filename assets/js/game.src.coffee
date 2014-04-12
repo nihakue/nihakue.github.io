@@ -1,49 +1,87 @@
-class Player
-  constructor: (game) ->
-    @game = game
-    @sprite = null
+
+class Mob extends Phaser.Sprite
+# Static Functions
+  @preload: (game, name) ->
+    game.load.atlasJSONHash(
+      name
+      "assets/atlas/#{name}.png"
+      "assets/atlas/#{name}.json"
+      )
+
+# Instance Functions
+  constructor: ->
+    super
+    @anchor =
+        x: 0.5
+        y: 0.5
+    @initPhysics()
+
+  initPhysics: =>
+    @game.physics.arcade.enable(@)
+    @body.bounce.y = 0.2
+    @body.gravity.y = 1500
+    @body.collideWorldBounds = true
+
+  goLeft: ->
+    @body.velocity.x = -@speed
+    @scale.setTo(-1, 1)
+    @animations.play('walk') if @body.touching.down
+
+  goRight: ->
+    @body.velocity.x = @speed
+    @scale.setTo(1, 1)
+    @animations.play('walk') if @body.touching.down
+
+  idle: ->
+    if @body.touching.down
+      @animations.play('idle')
+
+  jump: ->
+    @body.velocity.y = -@jumpStrength
+    @animations.play('jump')
+class Player extends Mob
+  constructor: ->
+    super
     @cursors = null
     @speed = 300
     @jumpStrength = 700
-
-  preload: ->
-    @game.load.atlasJSONHash(
-      'serge'
-      'assets/atlas/guy.png'
-      'assets/atlas/guy.json'
-      )
+    @health = 10
 
   create: ->
-    @sprite = @game.add.sprite(32, game.world.height - 150, 'serge')
-    @sprite.animations.add('jump',
+    @initAnimations()
+
+    @cursors = @game.input.keyboard.createCursorKeys()
+    @hurtKey = @game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
+    @hurtKey.onDown.add(@hurt, this)
+    @game.input.keyboard.addKeyCapture(Phaser.Keyboard.SPACEBAR)
+
+  initAnimations: ->
+    # Load all animations
+    @animations.add('jump',
       Phaser.Animation.generateFrameNames('jump', 0, 7, '', 2)
       5, false)
 
-    @sprite.animations.add('idle',
-      Phaser.Animation.generateFrameNames('puffed', 0, 8, '', 2),
+    @animations.add('idle',
+      Phaser.Animation.generateFrameNames('idle', 0, 8, '', 2),
       5, true)
 
-    @sprite.animations.add('walk',
-      Phaser.Animation.generateFrameNames('run', 0, 12, '', 2),
+    @animations.add('walk',
+      Phaser.Animation.generateFrameNames('walk', 0, 12, '', 2),
       15, true)
-    @sprite.anchor =
-      x: 0.5
-      y: 0.5
 
-    @initPhysics()
-    @cursors = @game.input.keyboard.createCursorKeys()
+    @animations.add('into_exhausted',
+      Phaser.Animation.generateFrameNames('into_exhausted', 0, 3, '', 2),
+      5, false)
+
+    @animations.add('exhausted',
+    Phaser.Animation.generateFrameNames('exhausted', 0, 7, '', 2),
+    5, true)
 
   update: ->
     @handleControl()
 
-  initPhysics: ->
-    @game.physics.arcade.enable(@sprite)
-    @sprite.body.bounce.y = 0.2
-    @sprite.body.gravity.y = 1500
-    @sprite.body.collideWorldBounds = true
-
   handleControl: ->
-    @sprite.body.velocity.x = 0
+    @body.velocity.x = 0
 
     if @cursors.left.isDown
       @goLeft()
@@ -52,36 +90,36 @@ class Player
     else
       @idle()
 
-    @jump() if @cursors.up.isDown and @sprite.body.touching.down
-
-  goLeft: ->
-    @sprite.body.velocity.x = -@speed
-    @sprite.scale.setTo(-1, 1)
-    @sprite.animations.play('walk') if @sprite.body.touching.down
-
-  goRight: ->
-    @sprite.body.velocity.x = @speed
-    @sprite.scale.setTo(1, 1)
-    @sprite.animations.play('walk') if @sprite.body.touching.down
+    @jump() if @cursors.up.isDown and @body.touching.down
 
   idle: ->
-    @sprite.animations.play('idle') if @sprite.body.touching.down
+    if @body.touching.down
+      if @health > 5
+          @animations.play('idle')
+        else 
+          @animations.play('exhausted')
 
-  jump: ->
-    @sprite.body.velocity.y = -@jumpStrength
-    @sprite.animations.play('jump')
+  hurt: ->
+    @health -= 1
 class Snell
-  constructor: (@game) ->
+# Static functions
+  @preload: (game) ->
+    game.load.image('sky', 'assets/images/sky.png')
+    game.load.image('ground', 'assets/images/platform.png')
+    game.load.image('star', 'assets/images/star.png')
+
+    Mob.preload(game, 'sqot')
+
+# Instance functions
+  constructor: (@game, @player) ->
     @platforms = null
     @stars = null
-
-  preload: ->
-    @game.load.image('sky', 'assets/images/sky.png')
-    @game.load.image('ground', 'assets/images/platform.png')
-    @game.load.image('star', 'assets/images/star.png')
+    @sqot = null
 
   create: ->
     @game.add.sprite(0, 0, 'sky')
+    
+    @sqots = @game.add.group()
 
     @platforms = @game.add.group()
     @platforms.enableBody = true
@@ -96,9 +134,14 @@ class Snell
     ledge = @platforms.create(-150, 250, 'ground')
     ledge.body.immovable = true
 
-    @stars = game.add.group()
+    @stars = @game.add.group()
     @stars.enableBody = true
+    # Create some sqots
+    for i in [0..100]
+      @sqots.add(new Sqot(@player, @game, @game.world.randomX, @game.world.randomY, 'sqot', 'walk00'))
 
+
+    # Create some stars
     for i in [0..12]
       star = @stars.create(i * 70, 0, 'star')
       star.body.gravity.y = 6
@@ -106,6 +149,35 @@ class Snell
 
   update: ->
     @game.physics.arcade.collide(@stars, @platforms);
+    @game.physics.arcade.collide(@sqots, @platforms);
+    @game.physics.arcade.overlap(
+      @player,
+      @sqots,
+      @player.hurt,
+      null, @player)
+    @sqots.callAll('update')
+class Sqot extends Mob
+  constructor: (@player, args...) ->
+    super(args...)
+    @speed = Math.random() * 200
+    @jumpStrength = 500
+    @initAnimations()
+
+  initAnimations: ->
+    @animations.add('walk',
+    Phaser.Animation.generateFrameNames('walk', 0, 3, '', 2),
+    5, true)
+
+  update: ->
+    @body.velocity.x = 0
+
+    if @player.x > @x
+      @goRight()
+    else
+      @goLeft()
+
+    if .99 < Math.random()
+      @jump()
 window.onload = ->
   @game = new Phaser.Game(800, 600, Phaser.AUTO)
   @game.state.add 'main', new MainState, true
@@ -117,127 +189,28 @@ class LogoSprite extends Phaser.Sprite
       x: 0.5
       y: 0.5
 
-class Player
-  constructor: (@game) ->
-    @sprite = null
-    @cursors = null
-    @speed = 300
-    @jumpStrength = 700
-    @hp = 1
-
-    @loopcount = 0
-    @isIdle = true
-
-  preload: ->
-    @game.load.atlasJSONHash(
-      'serge'
-      'assets/atlas/guy.png'
-      'assets/atlas/guy.json'
-      )
-
-  create: ->
-    @sprite = @game.add.sprite(32, game.world.height - 150, 'serge')
-
-    # Load all animations
-    @sprite.animations.add('jump',
-      Phaser.Animation.generateFrameNames('jump', 0, 7, '', 2)
-      5, false)
-
-    @sprite.animations.add('idle',
-      Phaser.Animation.generateFrameNames('puffed', 0, 8, '', 2),
-      5, true)
-
-    @sprite.animations.add('walk',
-      Phaser.Animation.generateFrameNames('run', 0, 12, '', 2),
-      15, true)
-
-    @into_exhausted = @sprite.animations.add('into_exhausted',
-      Phaser.Animation.generateFrameNames('into_exhausted', 0, 3, '', 2),
-      5, false)
-
-    @into_exhausted.onComplete.add(@exhaust, this)
-
-    @exhausted = @sprite.animations.add('exhausted',
-    Phaser.Animation.generateFrameNames('exhausted', 0, 7, '', 2),
-    5, true)
-
-
-    @sprite.anchor =
-      x: 0.5
-      y: 0.5
-
-    @initPhysics()
-    @cursors = @game.input.keyboard.createCursorKeys()
-    @hurtKey = @game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
-    @hurtKey.onDown.add(@hurt, this)
-    @game.input.keyboard.addKeyCapture(Phaser.Keyboard.SPACEBAR)
-
-  update: ->
-    @handleControl()
-
-  initPhysics: ->
-    @game.physics.arcade.enable(@sprite)
-    @sprite.body.bounce.y = 0.2
-    @sprite.body.gravity.y = 1500
-    @sprite.body.collideWorldBounds = true
-
-  handleControl: ->
-    @sprite.body.velocity.x = 0
-
-    if @cursors.left.isDown
-      @goLeft()
-    else if @cursors.right.isDown
-      @goRight()
-    else
-      @idle()
-
-    @jump() if @cursors.up.isDown and @sprite.body.touching.down
-
-  goLeft: ->
-    @sprite.body.velocity.x = -@speed
-    @sprite.scale.setTo(-1, 1)
-    @sprite.animations.play('walk') if @sprite.body.touching.down
-
-  goRight: ->
-    @sprite.body.velocity.x = @speed
-    @sprite.scale.setTo(1, 1)
-    @sprite.animations.play('walk') if @sprite.body.touching.down
-
-  idle: ->
-    if @sprite.body.touching.down
-      if @hp > .5
-        @sprite.animations.play('idle')
-      else 
-        @sprite.animations.play('exhausted')
-
-  exhaust: (sprite, animation) ->
-    @loopcount += 1
-    @sprite.animations.play('exhausted')
-
-  jump: ->
-    @sprite.body.velocity.y = -@jumpStrength
-    @sprite.animations.play('jump')
-
-  hurt: ->
-    @hp -= .6
 class MainState extends Phaser.State
   constructor: -> super
 
   preload: ->
-    @snell = new Snell(@game)
-    @snell.preload()
-
-    @player = new Player(@game)
-    @player.preload()
-
-    @hud = new Hud(@game, @player)
+    Mob.preload(@game, 'serge')
+    Snell.preload(@game)
 
   create: ->
     @game.physics.startSystem(Phaser.Physics.ARCADE)
+    @game.time.advancedTiming = true
+
+    
+    @player = new Player(@game, 32, @game.world.height - 150, 'serge', 'idle00')
+    @snell = new Snell(@game, @player)
+
+    @hud = new Hud(@game, @player)
 
     @snell.create()
     @player.create()
     @hud.create()
+
+    @game.world.add(@player)
 
     if @game.scaleToFit
       @game.stage.scaleMode = Phaser.StageScaleMode.SHOW_ALL
@@ -245,9 +218,9 @@ class MainState extends Phaser.State
       @game.stage.scale.refresh()
 
   update: ->
-    @game.physics.arcade.collide(@player.sprite, @snell.platforms);
+    @game.physics.arcade.collide(@player, @snell.platforms);
     @game.physics.arcade.overlap(
-      @player.sprite,
+      @player,
       @snell.stars,
       @collectStar,
       null, this);
@@ -256,6 +229,9 @@ class MainState extends Phaser.State
     @player.update()
     @hud.update()
     # @debugText.text = @player.body.deltaY()
+
+  # render: ->
+  #   @game.debug.body(@player)
 
   collectStar: (player, star) ->
     star.kill()
@@ -277,4 +253,4 @@ class Hud
       scoreStyle)
 
   update: ->
-    @scoreText.text = "lc: #{@player.loopcount} HP: #{@player.hp}\nScore:  #{@score}";
+    @scoreText.text = "fps: #{@game.time.fps} HP: #{@player.health}\nScore:  #{@score}";
