@@ -8,6 +8,9 @@ class Mob extends Phaser.Sprite
       "assets/atlas/#{name}.json"
       )
 
+  @canCollide: (player, enemy) ->
+    not (player.invincible or enemy.invincible)
+
 # Instance Functions
   constructor: ->
     super
@@ -15,6 +18,7 @@ class Mob extends Phaser.Sprite
         x: 0.5
         y: 0.5
     @initPhysics()
+    @invincible = false
 
   initPhysics: =>
     @game.physics.arcade.enable(@)
@@ -22,13 +26,13 @@ class Mob extends Phaser.Sprite
     @body.gravity.y = 1500
     @body.collideWorldBounds = true
 
-  goLeft: ->
-    @body.velocity.x = -@speed
+  goLeft: (velocity=@speed) ->
+    @body.velocity.x = -velocity
     @scale.setTo(-1, 1)
     @animations.play('walk') if @body.touching.down
 
-  goRight: ->
-    @body.velocity.x = @speed
+  goRight: (velocity=@speed) ->
+    @body.velocity.x = velocity
     @scale.setTo(1, 1)
     @animations.play('walk') if @body.touching.down
 
@@ -36,9 +40,18 @@ class Mob extends Phaser.Sprite
     if @body.touching.down
       @animations.play('idle')
 
-  jump: ->
-    @body.velocity.y = -@jumpStrength
+  jump: (strength=@jumpStrength) ->
+    @body.velocity.y = -strength
     @animations.play('jump')
+
+  flash: (duration) ->
+    @game.time.events.repeat(
+      100, duration / 100,
+      () ->
+        @alpha = if @alpha is 1 then .75 else 1
+      @)
+
+
 class Player extends Mob
   constructor: ->
     super
@@ -46,9 +59,13 @@ class Player extends Mob
     @speed = 300
     @jumpStrength = 700
     @health = 10
+    @invincibleTime = 2000
+    @t_for_fspeed = 300 #miliseconds to reach full speed
+    @falling = true
 
   create: ->
     @initAnimations()
+    @body.setSize(@body.width / 1.5, @body.height, 5, 0)
 
     @cursors = @game.input.keyboard.createCursorKeys()
     @hurtKey = @game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
@@ -58,8 +75,12 @@ class Player extends Mob
   initAnimations: ->
     # Load all animations
     @animations.add('jump',
-      Phaser.Animation.generateFrameNames('jump', 0, 7, '', 2)
-      5, false)
+      Phaser.Animation.generateFrameNames('jump', 0, 4, '', 2)
+      10, false)
+
+    @animations.add('fall',
+      Phaser.Animation.generateFrameNames('jump', 3, 7, '', 2)
+      10, false)
 
     @animations.add('idle',
       Phaser.Animation.generateFrameNames('idle', 0, 8, '', 2),
@@ -74,33 +95,80 @@ class Player extends Mob
       5, false)
 
     @animations.add('exhausted',
-    Phaser.Animation.generateFrameNames('exhausted', 0, 7, '', 2),
-    5, true)
+      Phaser.Animation.generateFrameNames('exhausted', 0, 7, '', 2),
+      5, true)
+
+    @hurtAnim = @animations.add('hurt',
+      Phaser.Animation.generateFrameNames('hurt', 0, 8, '', 2),
+      30, false)
 
   update: ->
+    @falling = @body.velocity.y > 200
+    if @falling
+      @animations.play('fall')
     @handleControl()
 
   handleControl: ->
-    @body.velocity.x = 0
+    if @animations.getAnimation('hurt').isPlaying
+      return
+    # Simulate friction/air resistance
+    if -0.1 < @body.velocity.x < 0.1
+      @body.velocity.x = 0
 
+    if @body.velocity.x > 0
+      @body.velocity.x -= @body.velocity.x/10 unless @body.velocity.x is 0
+    else
+      @body.velocity.x += @body.velocity.x/-10 unless @body.velocity.x is 0
+
+    # pretend acceleration
     if @cursors.left.isDown
-      @goLeft()
+      @goLeft(@speed * @cursors.left.getAccel(@t_for_fspeed))
+
     else if @cursors.right.isDown
-      @goRight()
+      @goRight(@speed * @cursors.right.getAccel(@t_for_fspeed))
     else
       @idle()
 
-    @jump() if @cursors.up.isDown and @body.touching.down
+    # Jump/minijump
+    if @cursors.up.justPressed(300) and @body.touching.down
+        @jump()
+        @jumping = true
+    if @jumping and not (@body.touching.down or @cursors.up.isDown)
+      @body.velocity.y = Math.floor(@body.velocity.y/3)
+      @jumping = false
+
+  goLeft: ->
+    super
+    @body.offset.setTo(-5, 0);
+
+  goRight: ->
+    super
+    @body.offset.setTo(5, 0);
 
   idle: ->
-    if @body.touching.down
+    if @body.touching.down and not @animations.getAnimation('hurt').isPlaying
       if @health > 5
           @animations.play('idle')
         else 
           @animations.play('exhausted')
 
   hurt: ->
-    @health -= 1
+    @health -= 4
+
+  collideEnemy: (player, enemy) ->
+    if not @invincible
+      direction = if player.x > enemy.x then 1 else -1
+      @body.velocity.y = -200
+      @body.velocity.x = direction * 400
+      @scale.setTo(-direction, 1)
+      @animations.play('hurt')
+      @health -= 1
+      @invincible = true
+      @game.time.events.add(
+        @invincibleTime
+        () -> @invincible = false
+        @)
+      @flash(@invincibleTime)
 class Snell
 # Static functions
   @preload: (game) ->
@@ -137,8 +205,8 @@ class Snell
     @stars = @game.add.group()
     @stars.enableBody = true
     # Create some sqots
-    for i in [0..100]
-      @sqots.add(new Sqot(@player, @game, @game.world.randomX, @game.world.randomY, 'sqot', 'walk00'))
+    # for i in [0..1]
+    #   @sqots.add(new Sqot(@player, @game, @game.world.randomX, @game.world.randomY, 'sqot', 'walk00'))
 
 
     # Create some stars
@@ -151,10 +219,7 @@ class Snell
     @game.physics.arcade.collide(@stars, @platforms);
     @game.physics.arcade.collide(@sqots, @platforms);
     @game.physics.arcade.overlap(
-      @player,
-      @sqots,
-      @player.hurt,
-      null, @player)
+      @player, @sqots, @player.collideEnemy, Mob.canCollide, @player)
     @sqots.callAll('update')
 class Sqot extends Mob
   constructor: (@player, args...) ->
@@ -182,6 +247,12 @@ window.onload = ->
   @game = new Phaser.Game(800, 600, Phaser.AUTO)
   @game.state.add 'main', new MainState, true
 
+  Phaser.Key::getAccel = (maxTime) ->
+      if @duration <= maxTime
+        @duration / maxTime
+      else
+        1
+
 class LogoSprite extends Phaser.Sprite
   constructor: ->
     super
@@ -199,6 +270,7 @@ class MainState extends Phaser.State
   create: ->
     @game.physics.startSystem(Phaser.Physics.ARCADE)
     @game.time.advancedTiming = true
+    @game.world.setBounds(0, 0, 4000, 600)
 
     
     @player = new Player(@game, 32, @game.world.height - 150, 'serge', 'idle00')
@@ -211,6 +283,7 @@ class MainState extends Phaser.State
     @hud.create()
 
     @game.world.add(@player)
+    @game.camera.follow(@player, Phaser.Camera.FOLLOW_TOPDOWN_TIGHT)
 
     if @game.scaleToFit
       @game.stage.scaleMode = Phaser.StageScaleMode.SHOW_ALL
@@ -228,10 +301,12 @@ class MainState extends Phaser.State
     @snell.update()
     @player.update()
     @hud.update()
-    # @debugText.text = @player.body.deltaY()
 
-  # render: ->
-  #   @game.debug.body(@player)
+  render: ->
+    # @game.debug.text("fps: #{@game.time.fps}", 16, 16)
+    # @game.debug.text("falling: #{@player.falling}", 16, 32)
+    # @game.debug.bodyInfo(@player, 16, 32)
+    @game.debug.body(@player)
 
   collectStar: (player, star) ->
     star.kill()

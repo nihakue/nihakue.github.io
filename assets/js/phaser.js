@@ -7,7 +7,7 @@
 *
 * Phaser - http://phaser.io
 *
-* v2.0.3 "Allorallen" - Built: Fri Apr 11 2014 13:08:30
+* v2.0.3 "Allorallen" - Built: Sun Apr 13 2014 17:48:29
 *
 * By Richard Davey http://www.photonstorm.com @photonstorm
 *
@@ -9702,7 +9702,7 @@ PIXI.RenderTexture.tempMatrix = new PIXI.Matrix();
 *
 * Phaser - http://phaser.io
 *
-* v2.0.3 "Allorallen" - Built: Fri Apr 11 2014 13:08:30
+* v2.0.3 "Allorallen" - Built: Sun Apr 13 2014 17:48:29
 *
 * By Richard Davey http://www.photonstorm.com @photonstorm
 *
@@ -38165,7 +38165,8 @@ Phaser.AnimationManager.prototype = {
                 }
             }
             else
-            {
+            {   
+                this.currentAnim.isPlaying = false;
                 this.currentAnim = this._anims[name];
                 this.currentAnim.paused = false;
                 return this.currentAnim.play(frameRate, loop, killOnComplete);
