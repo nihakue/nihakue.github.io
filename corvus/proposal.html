@@ -1680,7 +1680,8 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="introduction">Introduction</h1>
+<h1 id="classifying-bird-calls-using-deep-learning">Classifying bird calls using deep learning</h1>
+<h2 id="introduction">Introduction</h2>
 <p>Many problems in Machine Learning have long been hindered by massive problem spaces without efficient algorithms to explore them. Recent breakthroughs in the field have allowed academia and industry to re-approach some of these problems. One classic problem that has been reinvigorated by recent innovations is <em>classification</em>. </p>
 <p>Classification is something that humans are mostly very good at, but which still tends to trip up machines. Image and sound classification in particular are two domains where the abilities of humans and machines diverge wildly. Due in part to the fundamental differences between human and machine computation. One is a rich tangle of associations, symbols, and patterns, while the other is largely regular and deterministic. For this reason, methods in machine learning have tended to look towards human computation as a model for associative tasks like classification. One method in particular, called an &quot;Artificial Neural Network&quot;, and particularly so-called &quot;deep&quot; neural networks, have proven to be a useful tool for classification problems.</p>
 <p>I am proposing to use deep learning neural networks to perform classification of the massive of amounts of bird call audio that is freely available on the web. This technology could be used to automatically classify and catalogue incoming recordings, as well as improve the accuracy of existing databases. If I am successful, I hope to then investigate the possibility of using this classification network to generate new audio based on classification knowledge. In other words, to generate novel sounds that <em>pass</em> for  bird calls. This has been done to some degree of success with handwriting recognition and text classification deep learning neural nets, but I predict it will be very challenging with audio.</p>
@@ -1692,7 +1693,7 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="problem-definition">Problem Definition</h1>
+<h2 id="problem-definition">Problem Definition</h2>
 <p>Given an arbitrary bird call in the form of an mp3 or wav file, I hope to be able to classify the genus of the dominant birdcall present in the clip with some accuracy greater than random guessing.
 <img src="imgs/bird1.png" width=20%/></p>
 </div>
@@ -1703,10 +1704,10 @@ div#notebook {
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="methods">Methods</h1>
-<h2 id="data">Data</h2>
+<h2 id="methods">Methods</h2>
+<h3 id="data">Data</h3>
 <p>Machine learning is data dependent, and this project is no exception. I will need a sufficiently large tagged database for training and testing to achieve any kind of accuracy. Luckily, there&#39;s [xeno-canto][4]: a creative commons bird call database. There&#39;s even a public API for querying the database, which makes grabbing the audio files (as well as important classification information about the files (such as genus, recording location, etc) incredibly easy. I have created a simple python script to process queries and download audio files that match that query. Here&#39;s an example:</p>
-<h3 id="example-recording">Example Recording</h3>
+<h4 id="example-recording">Example Recording</h4>
 </div>
 </div>
 </div>
@@ -1764,13 +1765,13 @@ There are 1536 corvus recorings
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>This script is capable of batch downloading the entire database in one go, and will make the training and testing process go much more smoothly. I used the python requests module alongside the <a href="http://www.xeno-canto.org/article/153">xeno-canto api</a> to create this script.</p>
-<h2 id="feature-extraction">Feature extraction</h2>
+<h3 id="feature-extraction">Feature extraction</h3>
 <p>One of the key innovations with deep learning is that the network attempts to &#39;discover&#39; its own features, avoiding the tremendous data loss that comes from engineering features. Having said that, many researchers do tend to include human-chosen features as some point in the process. In order to do that, I will need to be able to extract features from the audio clip that are somehow characteristic of the genus of bird calling. This is definitely a non-trivial problem, and I have started studying different kinds of transforms that may be useful. Possible features of interest include things like average frequency, number of sounds, locality of sounds, etc (where a &#39;sound&#39; is a mostly discrete sound event within the larger call event). Obviously some of these features are not very well defined, and it will definitely be a challenge to find and extract meaningful, consistent features that do not vary with non-features such as recording quality.</p>
 <p>I am looking at phoneme extraction for speech recognition as a possible template. It would be nice if there was a library out there that I could use, but I haven&#39;t found anything yet. </p>
-<h2 id="waveform-or-spectrogram-analysis">Waveform or Spectrogram analysis</h2>
+<h3 id="waveform-or-spectrogram-analysis">Waveform or Spectrogram analysis</h3>
 <p>Perhaps instead of analyzing the audio itself, analyze the <em>waveform</em> or the <em>spectrogram</em> that represents the bird call <a href="http://www.cs.ucr.edu/~eamonn/SDM_insects.pdf">2</a>. This turns our audio classification problem into an <em>image</em> classification problem, which is an arguably simpler problem with a large community of researchers and industry professionals working on it, and many accurate results so far. Similar methods have been used to classify avian nocturnal flight calls <a href="http://ieeexplore.ieee.org/xpl/login.jsp?tp=&amp;arnumber=4518038&amp;url=http%3A%2F%2Fieeexplore.ieee.org%2Fxpls%2Fabs_all.jsp%3Farnumber%3D4518038">3</a>.</p>
 <p>This would involve generating the waveform images at some standard scale, in time and amplitude, and then saving just the waveform as a png or bmp. Then the deep learning network can be put to work on the pixels in those images, and learning becomes a relatively straightforward process.</p>
-<h3 id="example-waveform">Example waveform</h3>
+<h4 id="example-waveform">Example waveform</h4>
 </div>
 </div>
 </div>
@@ -2052,7 +2053,7 @@ SCrJaNRhQERERERERERERERERERERERERERERERq0/8H9MpQlBCLgioAAAAASUVORK5CYII=
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="deep-learning">Deep Learning</h2>
+<h3 id="deep-learning">Deep Learning</h3>
 <p>To produce good classification results, I will need to train a deep learning classifier. I am not yet sure which deep learning classifier will be best suited in this case, but I am leaning towards a <a href="http://en.wikipedia.org/wiki/Deep_belief_network">deep belief network</a>, which has been used to produce state of the art results in computer vision and natural language processing, or a <a href="http://en.wikipedia.org/wiki/Recurrent_neural_network">recurrent neural network</a>, which has famously been used to both classify and <a href="http://www.cs.toronto.edu/~graves/handwriting.html">generate</a> handwriting samples.</p>
 <p>I plan on using <a href="http://deeplearning.net/software/theano/">Theano</a>, a python module that does a lot of the heaving lifting for you when it comes to actually implementing and verifying deep learning networks (e.g. symbolic differentiation, unit testing, evaluation). In addition, I will be using numpy and scipy for analysis, and matplotlib and javascript for visualization.</p>
 </div>
@@ -2063,11 +2064,11 @@ SCrJaNRhQERERERERERERERERERERERERERERERq0/8H9MpQlBCLgioAAAAASUVORK5CYII=
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="anticipated-results">Anticipated Results</h1>
+<h2 id="anticipated-results">Anticipated Results</h2>
 <p>Evaluation of the classifier will be done by splitting the training data into a learning and test set, and then evaluating the accuracy of the classifier on the test set. I will analyse both precision and recall, and will continue to make improvements until the classifier produces results that are significantly better than random guessing.
 <img src="https://docs.google.com/drawings/d/1IXJhln3OeDuC6siM1QvRtig2GpubDEQnNhKpsc3yzaI/pub?w=480&amp;h=360" alt="The plan"></p>
 <p>The probability of guessing any particular genus is a function of the number of bird genera that exist, which may be very large. If good results in this domain seem impossible, the scope of the project can be reduced to a simpler 0/1 classifier for a <em>particular</em> genus (Is this a crow? y/n).</p>
-<h2 id="visualization">Visualization</h2>
+<h3 id="visualization">Visualization</h3>
 <p>I expect to be able to present results across multiple species, sorted by accuracy e.g.</p>
 <table>
     <tr>
@@ -2314,7 +2315,7 @@ IiIiIiIiIiIiIiIiIiJ58/8BOnZ8Wv0nmjAAAAAASUVORK5CYII=
 </div>
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="web-app">Web App</h3>
+<h4 id="web-app">Web App</h4>
 <p>Given that my results are good, I would like to create a single page web app that accepts bird call audio files and performs classification of that file for the user. This would include some kind of &#39;confidence&#39; measure alongside the classification, and maybe a link to the genus wikipedia as well as an image of a bird from that genus.</p>
 <div style="border: 1px dashed black; padding: 25px; width: 75%; margin: auto; background-color: #EFEFEF;">
 <h1>Welcome to bird classifier</h1>
