@@ -10,13 +10,14 @@
 
      <title>Gabriel West</title>
      <link rel="icon" type="image/ico" href="images/favicon.ico">
+     <link rel="stylesheet" type="text/css" href="print.css" media="print">
 
      <style type="text/css">
         * { margin: 0; padding: 0; }
         body { font: 16px Helvetica, Sans-Serif; line-height: 24px; background: url(images/noise.png); }
         .clear { clear: both; }
         #page-wrap { width: 800px; margin: 40px auto 60px; }
-        #pic { float: right; margin: -30px 0 0 0; visibility: hidden;}
+        #pic { float: right; margin: -30px 0 0 0;}
         h1 { margin: 0 0 16px 0; padding: 0 0 16px 0; font-size: 42px; font-weight: bold; letter-spacing: -2px; border-bottom: 1px solid #999; }
         h2 { font-size: 18px; margin: 0 0 6px 0; position: relative; }
         h2 span { /*position: absolute;*/ bottom: 0; right: 0; font-style: italic; font-family: Georgia, Serif; font-size: 16px; color: #999; font-weight: normal; }
@@ -24,6 +25,8 @@
         p { margin: 0 0 16px 0; }
         a { color: #999; text-decoration: none; border-bottom: 1px dotted #999; }
         a:hover { border-bottom-style: solid; color: black; }
+        .highlight {opacity: .8;}
+        .highlight:hover {opacity: 1;}
         ul { margin: 0 0 32px 17px; }
         #objective { width: 500px; float: left; }
         #objective p { font-family: Georgia, Serif; font-style: italic; color: #666; }
@@ -46,8 +49,11 @@
 <body>
 
     <div id="page-wrap">
+        <div class="printHide">
+            <a href="https://www.linkedin.com/pub/gabriel-west/40/663/728"><img src="images/linkedin_58x58.jpg" class="highlight" alt="Gabriel West" id="pic" /></a>
+            <a href="https://github.com/nihakue"><img src="images/octocat_80x58.jpg" class="highlight" alt="Gabriel West" id="pic" /></a>
 
-        <img src="images/gabe2.png" alt="Gabriel West" id="pic" />
+        </div>
 
         <div id="contact-info" class="vcard">
 
@@ -58,7 +64,8 @@
             <p>
                 Cell: <span class="tel">+44 0771-924-7449;</span> <span class="tel">+1 801-472-3699</span><br />
                 Email: <a class="email" href="mailto:g@brielwest.me">g@brielwest.me</a><br />
-                GitHub: <a href="https://github.com/nihakue">https://github.com/nihakue</a>
+                GitHub: <a href="https://github.com/nihakue">https://github.com/nihakue</a><br />
+                LinkedIn: <a href="https://www.linkedin.com/pub/gabriel-west/40/663/728">https://www.linkedin.com/pub/gabriel-west/40/663/728</a>
             </p>
         </div>
 
